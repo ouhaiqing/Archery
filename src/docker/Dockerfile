@@ -73,7 +73,7 @@ RUN yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclie
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout $VERSION \
+    && git clone https://github.com/hhyo/archery.git \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
