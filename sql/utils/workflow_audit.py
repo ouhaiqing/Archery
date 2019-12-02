@@ -332,6 +332,12 @@ class Audit(object):
                         result = True
         return result
 
+    @staticmethod
+    def check_is_self(user, workflow_id):
+        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+        flag = workflow_detail.engineer == user.username
+        return flag
+
     # 获取当前工单审批流程和当前审核组
     @staticmethod
     def review_info(workflow_id, workflow_type):

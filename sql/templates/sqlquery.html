@@ -236,6 +236,90 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="mongo_help" role="tabpane2"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="mongoHelp" name="mongoope" checked
+                                                   onclick="show(this)"> <i> 操作及说明 </i></label>
+                                    <label> <input type="radio" value="addHelp" name="mongoope"
+                                                   onclick="show(this)"> <i> 增 </i></label>
+                                    <label> <input type="radio" value="removeHelp" name="mongoope"
+                                                   onclick="show(this)"> <i> 删 </i></label>
+                                    <label> <input type="radio" value="updateHelp" name="mongoope"
+                                                   onclick="show(this)"> <i> 改 </i></label>
+                                </div>
+
+                                <div id="mongoHelp" class="alert alert-info" style="display: block">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、查询操作目前只支持find, count, aggregate方法：db.collection.find[count]({expression}) 与 db.collection.aggregate(<font color='red'>[</font>expression<font color='red'>]</font>)</i></br>
+                                    <i> 2、审核操作目前只支持createCollection, createIndex, insert, insertMany, update, remove方法</i></br>
+                                    <i> 3、审核sql如有多条，请务必以分号";"分割</i></br>
+                                    <i> 4、e.g:</i></br>
+                                    <i> db.good.user.count({"age":{"$gt":21}})</i></br>
+                                    <i> db.product.find({"category_name": "你好>我好>他也好"})</i></br>
+                                    <i> db.product.aggregate([{'$group' : {'_id' : "$category_code", 'count' : {'$sum': 1}}}])</i></br>
+                                    <i> db.product.remove( {'name':'harking2'} ); db.produce.createIndex('name',1); db.createCollection("test_create_collection1")</i></br></br>
+                                    <i> <b>注:暂不支持外部函数传入，如：ISODate("2013-02-22T03:03:37.312Z")</b></i>
+                                </div>
+
+                                <div id="addHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、增加操作目前支持集合创建，索引创建，记录添加相关方法：createCollection, createIndex, insert, insertMany</i></br>
+                                    <i> 2、e.g:</i></br>
+                                    <i> db.createCollection("test_create_collection")</i></br>
+                                    <i> db.product.createIndex('name',1)</i></br>
+                                    <i> db.product.insert( { "id': '20191002', 'name': 'Jordan', 'age': 20, 'gender': 'male' })</i></br>
+                                    <i> db.product.insertMany( [{"id': '20191002', 'name': 'Jordan', 'age': 20, 'gender': 'male' }, {"id': '20191001', 'name': 'Jordan', 'age': 20, 'gender': 'male' } ] )</i></br>
+                                </div>
+
+                                <div id="updateHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、修改操作相关方法：update</i></br>
+                                    <i> 2、e.g:</i></br>
+                                    <i>db.produce.update( {'name':'Jordan'}, {'$set':{'name':'harking'}}, {'multi':true} )</i></br>
+                                </div>
+
+                                <div id="removeHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、删除操作务必要传入删除条件，谨慎使用，相关方法：remove</i></br>
+                                    <i> 2、e.g:</i></br>
+                                    <i> db.product.remove({'name':'harking'})</i>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mysql_help" role="tabpane3"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="mongoHelp" name="mysqlope" checked
+                                                   onclick="show(this)"> <i> 操作及说明 </i></label>
+                                </div>
+
+                                <div id="mysqlHelp" class="alert alert-info" style="display: block">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、影响行数并不是实际切确的数量，其值来自于执行计划或者 information_schema.tables对应表列table_rows值</i></br>
+                                    <i> 2、sql审核删除视图sql请务必放到最后方能检测执行</i>
+                                </div>
+
+                            </div>
+                        </div>
                         <div id="sql_log_result" role="tabpanel"
                              class="form-group tab-pane fade in active table-responsive">
                             <table id="sql-log" data-toggle="table" class="form-group table table-condensed"
@@ -513,6 +597,42 @@
             href_a.setAttribute("role", "tab");
             href_a.setAttribute("data-toggle", "tab");
             href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
+            li.appendChild(href_a);//将a添加到li
+            $("#nav-tabs").prepend(li);//li添加到ul
+            $("#nav-tabs a:first").tab('show')
+        }
+
+        // 添加mongo帮助页
+        function mongo_help_tab_add() {
+
+            //增加执行结果tab页
+            var li = document.createElement("li"); //创建li
+            li.setAttribute("id", "mongo_help_tab");
+            li.setAttribute("role", "presentation");
+
+            var href_a = document.createElement("a"); //创建li中的链接a
+            href_a.setAttribute("href", "#mongo_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "Mongo帮助文档"; //链接显示文本（相当于标签标题）
+            li.appendChild(href_a);//将a添加到li
+            $("#nav-tabs").prepend(li);//li添加到ul
+            $("#nav-tabs a:first").tab('show')
+        }
+
+        // 添加mysql帮助页
+        function mysql_help_tab_add() {
+
+            //增加执行结果tab页
+            var li = document.createElement("li"); //创建li
+            li.setAttribute("id", "mysql_help_tab");
+            li.setAttribute("role", "presentation");
+
+            var href_a = document.createElement("a"); //创建li中的链接a
+            href_a.setAttribute("href", "#mysql_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "mysql帮助文档"; //链接显示文本（相当于标签标题）
             li.appendChild(href_a);//将a添加到li
             $("#nav-tabs").prepend(li);//li添加到ul
             $("#nav-tabs a:first").tab('show')
@@ -831,26 +951,42 @@
             var optgroup = $('#instance_name :selected').parent().attr('label');
             if (optgroup === "Redis") {
                 $("#div-table_name").hide();
+                $("#redis_help_tab").remove();
+                $("#mongo_help_tab").remove();
+                $("#mysql_help_tab").remove();
                 $("#btn-format").attr('disabled', true);
                 $("#btn-explain").attr('disabled', true);
-                $("#redis_help_tab").remove();
                 redis_help_tab_add()
+            }else if (optgroup === "Mongo") {
+                $("#div-table_name").show();
+                $("#redis_help_tab").remove();
+                $("#mongo_help_tab").remove();
+                $("#mysql_help_tab").remove();
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+                mongo_help_tab_add()
             } else if (optgroup === "MySQL") {
                 $("#div-table_name").show();
                 $("#redis_help_tab").remove();
+                $("#mongo_help_tab").remove();
+                $("#mysql_help_tab").remove();
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', false);
-                $("#nav-tabs a:last").tab('show');
+                mysql_help_tab_add()
             } else if (optgroup === "Phoenix") {
                 $("#div-table_name").show();
                 $("#div-schema_name").remove();
                 $("#redis_help_tab").remove();
+                $("#mongo_help_tab").remove();
+                $("#mysql_help_tab").remove();
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").remove();
                 $("#nav-tabs a:last").tab('show');
             } else {
                 $("#div-table_name").show();
                 $("#redis_help_tab").remove();
+                $("#mongo_help_tab").remove();
+                $("#mysql_help_tab").remove();
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', true);
                 $("#nav-tabs a:last").tab('show');
@@ -865,7 +1001,7 @@
             sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 async: async,
@@ -934,7 +1070,7 @@
                 resource_type = "schema"
             }
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -985,7 +1121,7 @@
             $('#table_name').selectpicker('refresh');
             //获取table
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -1152,6 +1288,28 @@
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "block";
+            }else if (o.value == "mongoHelp") {
+                document.getElementById("addHelp").style.display = "none";
+                document.getElementById("mongoHelp").style.display = "block";
+                document.getElementById("updateHelp").style.display = "none";
+                document.getElementById("removeHelp").style.display = "none";
+            } else if (o.value == "addHelp") {
+                document.getElementById("addHelp").style.display = "block";
+                document.getElementById("mongoHelp").style.display = "none";
+                document.getElementById("updateHelp").style.display = "none";
+                document.getElementById("removeHelp").style.display = "none";
+            } else if (o.value == "updateHelp") {
+                document.getElementById("addHelp").style.display = "none";
+                document.getElementById("mongoHelp").style.display = "none";
+                document.getElementById("updateHelp").style.display = "block";
+                document.getElementById("removeHelp").style.display = "none";
+            }else if (o.value == "removeHelp") {
+                document.getElementById("addHelp").style.display = "none";
+                document.getElementById("mongoHelp").style.display = "none";
+                document.getElementById("updateHelp").style.display = "none";
+                document.getElementById("removeHelp").style.display = "block";
+            }else if (o.value == "viewHelp") {
+                document.getElementById("viewHelp").style.display = "block";
             }
         }
     </script>

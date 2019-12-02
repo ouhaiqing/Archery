@@ -141,9 +141,12 @@ def submit(request):
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
     is_backup = True if request.POST.get('is_backup') == 'True' else False
-    cc_users = request.POST.getlist('cc_users')
+    notify_users = request.POST.getlist('notify_users')
+    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
     run_date_start = request.POST.get('run_date_start')
     run_date_end = request.POST.get('run_date_end')
+
+    is_manual = request.POST.get('is_manual')
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, db_name, is_backup]:
@@ -194,7 +197,7 @@ def submit(request):
                 is_backup=is_backup,
                 instance=instance,
                 db_name=db_name,
-                is_manual=0,
+                is_manual=is_manual,
                 syntax_type=check_result.syntax_type,
                 create_time=timezone.now(),
                 run_date_start=run_date_start or None,
@@ -220,7 +223,7 @@ def submit(request):
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -271,6 +274,10 @@ def passed(request):
         return render(request, 'error.html', context)
 
     user = request.user
+    if Audit.check_is_self(user, workflow_id) is True:
+        context = {'errMsg': '你无权操作自己提交的工单！'}
+        return render(request, 'error.html', context)
+
     if Audit.can_review(user, workflow_id, 2) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
@@ -311,6 +318,10 @@ def execute(request):
     workflow_id = int(request.POST.get('workflow_id', 0))
     if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
+        return render(request, 'error.html', context)
+
+    if Audit.check_is_self(request.user, workflow_id) is True:
+        context = {'errMsg': '你无权操作自己提交的工单！'}
         return render(request, 'error.html', context)
 
     if can_execute(request.user, workflow_id) is False:

@@ -51,6 +51,36 @@ def get_syntax_type(sql, parser=True, db_type='mysql'):
     return syntax_type
 
 
+def change_ddl_to_query_count(db_name, sql, s_map, key):
+    schema_sql = 'select TABLE_ROWS from information_schema.`TABLES` where TABLE_SCHEMA = \'' + db_name + '\' and TABLE_NAME = \'TB_NAME\';'
+    s_t_name = ''
+    sql_list = sql.split(' ')
+    e_list = []
+    for e in sql_list:
+        if e != '':
+            e_list.append(e)
+
+    if (e_list[0].lower() == 'alter'
+        or e_list[0].lower() == 'rename'
+        or e_list[0].lower() == 'drop') and e_list[1].lower() == 'table':
+        s_t_name = e_list[2]
+    elif e_list[0].lower() == 'truncate':
+        if e_list[1].lower() == 'table':
+            s_t_name = e_list[2]
+        else:
+            s_t_name = e_list[1]
+
+    if s_t_name != '':
+        st_list = s_t_name.split('.')
+        if len(st_list) == 2:
+            tb_name = st_list[1]
+        else:
+            tb_name = st_list[0]
+        schema_sql = schema_sql.replace('TB_NAME', tb_name)
+        s_map[key] = schema_sql
+    return s_map
+
+
 def remove_comments(sql, db_type='mysql'):
     """
     去除SQL语句中的注释信息

@@ -147,7 +147,6 @@ def detail(request, workflow_id):
 
     # 获取是否开启手工执行确认
     manual = SysConfig().get('manual')
-
     review_result = ReviewSet()
     if rows:
         try:
@@ -387,6 +386,6 @@ def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件
     file = os.path.join(settings.BASE_DIR, 'docs/docs.md')
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding='UTF-8') as f:
         md = f.read().replace('\n', '\\n')
     return render(request, 'dbaprinciples.html', {'md': md})

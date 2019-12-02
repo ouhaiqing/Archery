@@ -123,7 +123,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'archery',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'ouhaiqing419',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
@@ -149,7 +149,7 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'label': 'Django Q',
     'django_redis': 'default',
-    'sync': False  # 本地调试可以修改为True，使用同步模式
+    'sync': True  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
@@ -248,4 +248,20 @@ LOGGING = {
             'propagate': False
         },
     }
+}
+
+#自定义参数
+CONFIG_PARAMS = {
+    'redis':{
+        'safe_inception_cmd':["del", "dump", "move", "rename", "renamenx", "restore",
+                    "append", "getset","setex", "set", "setex", "setnx",
+                    "hdel", "hmset","hset", "hsetnx",
+                    "blpop", "brpop", "brpoplpush", "lpop", "lpush", "lpushx","lset","rpush"
+                    "sadd", "scard", "smove", "spop",
+                    "zadd", "zcard","sadd", "scard", "smove", "spop"]
+    },
+    'mysql':{
+        'affected_rows_max_size': 1000*1000
+    }
+
 }

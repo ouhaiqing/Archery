@@ -6,13 +6,13 @@ import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from django.views.decorators.cache import cache_page
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
 from .models import Instance, ParamTemplate, ParamHistory
+from django.db.models import Q
 
 
 @permission_required('sql.menu_instance_list', raise_exception=True)
@@ -28,17 +28,21 @@ def lists(request):
 
     # 组合筛选项
     filter_dict = dict()
+    filter_dict2 = dict()
     # 过滤搜索
     if search:
         filter_dict['instance_name__icontains'] = search
+        filter_dict2['host__icontains'] = search
     # 过滤实例类型
     if type:
         filter_dict['type'] = type
+        filter_dict2['type'] = type
     # 过滤数据库类型
     if db_type:
         filter_dict['db_type'] = db_type
+        filter_dict2['db_type'] = db_type
 
-    instances = Instance.objects.filter(**filter_dict)
+    instances = Instance.objects.filter(Q(**filter_dict) | Q(**filter_dict2))
     # 过滤标签，返回同时包含全部标签的实例，TODO 循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
@@ -199,19 +203,18 @@ def schemasync(request):
     # 准备参数
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
-    os.makedirs(output_directory, exist_ok=True)
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
         "tag": tag,
         "output-directory": output_directory,
         "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=instance_info.user,
-                                                                            pwd=instance_info.password,
+                                                                            pwd=instance_info.raw_password,
                                                                             host=instance_info.host,
                                                                             port=instance_info.port,
                                                                             database=db_name),
         "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=target_instance_info.user,
-                                                                            pwd=target_instance_info.password,
+                                                                            pwd=target_instance_info.raw_password,
                                                                             host=target_instance_info.host,
                                                                             port=target_instance_info.port,
                                                                             database=target_db_name)
@@ -251,20 +254,19 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-@cache_page(60 * 5)
 def instance_resource(request):
     """
     获取实例内的资源信息，database、schema、table、column
     :param request:
     :return:
     """
-    instance_id = request.GET.get('instance_id')
-    instance_name = request.GET.get('instance_name')
-    db_name = request.GET.get('db_name')
-    schema_name = request.GET.get('schema_name')
-    tb_name = request.GET.get('tb_name')
+    instance_id = request.POST.get('instance_id')
+    instance_name = request.POST.get('instance_name')
+    db_name = request.POST.get('db_name')
+    schema_name = request.POST.get('schema_name')
+    tb_name = request.POST.get('tb_name')
 
-    resource_type = request.GET.get('resource_type')
+    resource_type = request.POST.get('resource_type')
     if instance_id:
         instance = Instance.objects.get(id=instance_id)
     else:

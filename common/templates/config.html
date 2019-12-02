@@ -228,17 +228,6 @@
                             </div>
                             <div id="div-auto-review-config" style="display: none">
                                 <div class="form-group">
-                                    <label for="auto_review_tag"
-                                           class="col-sm-4 control-label">AUTO_REVIEW_TAG</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="auto_review_tag"
-                                               key="auto_review_tag"
-                                               value="{{ config.auto_review_tag }}"
-                                               placeholder="自动审批的实例标签CODE，多个使用逗号分隔">
-                                    </div>
-                                </div>
-                                <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                     <div class="col-sm-5">
@@ -382,8 +371,7 @@
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
-                        <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
-                        <h6 style="color:red">注2：企业微信开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
+                        <h6 style="color:red">注：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -567,94 +555,9 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="form-group">
-                                <label for="wx"
-                                       class="col-sm-4 control-label">企业微信</label>
-                                <div class="col-sm-8">
-                                    <div class="switch switch-small">
-                                        <label>
-                                            <input id="wx" key="wx"
-                                                   value="{{ config.wx }}"
-                                                   type="checkbox"> 是否开启企业微信通知
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="div-wx-config" style="display: none">
-                                <div class="form-group">
-                                    <i class="ace-icon fa fa-hand-o-right"></i>
-                                    创建企业微信应用参考：<a target="_blank"
-                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
-                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
-                                    </button>
-                                </div>
-                                <div class="form-group">
-                                    <label for="wx_corpid"
-                                           class="col-sm-4 control-label">CorpId</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="wx_corpid"
-                                               key="wx_corpid"
-                                               value="{{ config.wx_corpid }}"
-                                               placeholder="企业微信的企业ID">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="wx_agent_id"
-                                           class="col-sm-4 control-label">AgentId</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="wx_agent_id"
-                                               key="wx_agent_id"
-                                               value="{{ config.wx_agent_id }}"
-                                               placeholder="应用的AgentId">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="wx_app_secret"
-                                           class="col-sm-4 control-label">Secret</label>
-                                    <div class="col-sm-5">
-                                        <input type="password" class="form-control"
-                                               id="wx_app_secret"
-                                               key="wx_app_secret"
-                                               value="{{ config.wx_app_secret }}"
-                                               placeholder="应用的Secret">
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
-                        <hr/>
-                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
-                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
-                        <hr/>
-                        <div class="form-horizontal">
-                            <div class="form-group">
-                                <label for="aliyun_ak"
-                                       class="col-sm-4 control-label">AccessKeyID</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_ak"
-                                           key="aliyun_ak"
-                                           value="{{ config.aliyun_ak }}"
-                                           placeholder="AccessKeyID">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="aliyun_secret"
-                                       class="col-sm-4 control-label">AccessKeySecret</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_secret"
-                                           key="aliyun_secret"
-                                           value="{{ config.aliyun_secret }}"
-                                           placeholder="AccessKeySecret">
-                                </div>
-                            </div>
-                        </div>
-                        <h5 style="color: darkgrey"><b>其他</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -767,11 +670,11 @@
                                        disabled="disabled" style="width: 283px">
                             </div>
                             <div class="form-group">
-                                <select id="group_auditors" name="group"
+                                <select id="group_auditors" name="group" multiple
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="审批人" data-placeholder="审批人:" data-live-search="true"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">添加审批权限组</option>
+                                    <option value="is-empty" disabled="disabled">添加审批权限组</option>
                                     {% for auth_group in auth_group_list %}
                                         <option value="{{ auth_group.name }}">{{ auth_group.name }}
                                     {% endfor %}
@@ -826,8 +729,6 @@
                     $("#div-ding-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
-                } else if ($(this).attr("id") === 'wx') {
-                    $("#div-wx-config").show();
                 }
             } else {
                 $(this).val(false);
@@ -838,8 +739,6 @@
                     $("#div-ding-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
-                } else if ($(this).attr("id") === 'wx') {
-                    $("#div-wx-config").hide();
                 }
             }
         });
@@ -895,18 +794,37 @@
 
         // 切换组触发工单类型切换事件
         $("#group").change(function () {
-            $("#workflow_type").trigger('change')
+            $("#workflow_type").trigger('change');
+            $("#group_auditors").selectpicker('deselectAll');
+            $("#group_auditors").selectpicker('refresh');
         });
 
         // 点击用户填充到workflow_auditors_text
         $("#group_auditors").change(function () {
-            var auth_group = $(this).find(':selected').attr("disabled", "disabled").val();
-            var auditors = $("#workflow_auditors_text").val();
-            if (auditors) {
-                $("#workflow_auditors_text").val(auditors + '->' + auth_group);
-            } else {
-                $("#workflow_auditors_text").val(auth_group)
+            var auth_group = $(this).val();
+
+            var auditors = $("#workflow_auditors_text").val().split('->').filter(key => key);
+            var len1 = auth_group.length;
+            var len2 = auditors.length;
+
+            if (len1 == len2 + 1) {
+                for (let i in auth_group) {
+                    if (!auditors.includes(auth_group[i])) {
+                        auditors.push(auth_group[i])
+                        break;
+                    }
+                }
             }
+
+            if (len1 + 1 == len2) {
+                for (let i in auditors) {
+                    if (!auth_group.includes(auditors[i])) {
+                        auditors.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+            $("#workflow_auditors_text").val(auditors.join('->'));
             $('#group_auditors').selectpicker('render');
             $('#group_auditors').selectpicker('refresh');
         });
@@ -921,6 +839,8 @@
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
             $("#workflow_auditors_text").val('');
+            $("#group_auditors").selectpicker('deselectAll');
+            $("#group_auditors").selectpicker('refresh');
             if ($("#group").val()) {
                 $.ajax({
                     type: "post",

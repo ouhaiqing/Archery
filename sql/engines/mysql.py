@@ -5,37 +5,32 @@ import MySQLdb
 import re
 import sqlparse
 from MySQLdb.connections import numeric_part
-from MySQLdb.constants import FIELD_TYPE
+from django.conf import settings
 
 from sql.engines.goinception import GoInceptionEngine
-from sql.utils.sql_utils import get_syntax_type, remove_comments
+from sql.utils.sql_utils import get_syntax_type, remove_comments, change_ddl_to_query_count
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
+from common.utils.timer import FuncTimer
 
 logger = logging.getLogger('default')
 
 
 class MysqlEngine(EngineBase):
-
     def get_connection(self, db_name=None):
-        # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
-        conversions = MySQLdb.converters.conversions
-        conversions[FIELD_TYPE.BIT] = lambda data: data == b'\x01'
         if self.conn:
             self.thread_id = self.conn.thread_id()
             return self.conn
         if db_name:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         db=db_name, charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
                                         connect_timeout=10)
         else:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
                                         connect_timeout=10)
         self.thread_id = self.conn.thread_id()
         return self.conn
@@ -215,7 +210,7 @@ class MysqlEngine(EngineBase):
         critical_ddl_regex = config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
         check_critical_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
-
+        affected_rows_max_size = settings.CONFIG_PARAMS['mysql']['affected_rows_max_size']
         for row in inc_check_result.rows:
             statement = row.sql
             # 去除注释
@@ -234,6 +229,31 @@ class MysqlEngine(EngineBase):
                                       stagestatus='驳回高危SQL',
                                       errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                                       sql=statement)
+            # 高危语句
+            elif row.errormessage.find('命令禁止! 无法创建视图') == 0:
+                row.errlevel = 0
+                row.errormessage = 'view type'
+                inc_check_result.error_count -= 1
+                result = ReviewResult(id=line, errlevel=0,
+                                      stagestatus='Audit completed',
+                                      errormessage='view type',
+                                      sql=statement,
+                                      affected_rows=0,
+                                      execute_time=0)
+            # 高危语句
+            elif row.errlevel == 2:
+                #判断是否为删除视图, 建议删除视图语句放到最后一条，不然用inception无法检测其后面的sql会忽略检测与执行
+                split_sql = statement.split()
+                if len(split_sql) > 2 and split_sql[0].lower() == 'drop' and split_sql[1].lower() == 'view':
+                    row.errlevel = 0
+                    row.errormessage = 'view type'
+                    inc_check_result.error_count -= 1
+                    result = ReviewResult(id=line, errlevel=0,
+                                          stagestatus='Audit completed',
+                                          errormessage='view type',
+                                          sql=statement,
+                                          affected_rows=0,
+                                          execute_time=0)
             # 正常语句
             else:
                 result = ReviewResult(id=line, errlevel=0,
@@ -241,12 +261,30 @@ class MysqlEngine(EngineBase):
                                       errormessage='None',
                                       sql=statement,
                                       affected_rows=0,
-                                      execute_time=0, )
+                                      execute_time=0)
 
             # 没有找出DDL语句的才继续执行此判断
             if check_critical_result.syntax_type == 2:
                 if get_syntax_type(statement, parser=False, db_type='mysql') == 'DDL':
                     check_critical_result.syntax_type = 1
+                    # 从information_schema查询影响行数语句
+                    s_map = change_ddl_to_query_count(db_name, sql=row.sql, s_map={}, key=row.id)
+                    if len(s_map) > 0:
+                        sql = s_map[row.id]
+                        row_affect = self.query(sql=sql)
+                        if len(row_affect.rows) > 0 and len(row_affect.rows[0]) > 0:
+                            r_list = row_affect.rows
+                            row.affected_rows = r_list[0][0]
+
+            if row.affected_rows > affected_rows_max_size:
+                check_critical_result.is_critical = True
+                result = ReviewResult(id=line, errlevel=2,
+                                      stagestatus='驳回高危SQL',
+                                      errormessage='预计影响行数：' + str(
+                                          row.affected_rows) + ' (affected_rows_max_size：' + str(
+                                          affected_rows_max_size) + ')，建议DBA执行！',
+                                      sql=statement,
+                                      affected_rows=row.affected_rows)
             check_critical_result.rows += [result]
 
             # 遇到禁用和高危语句直接返回
@@ -271,14 +309,26 @@ class MysqlEngine(EngineBase):
             return result
         # 原生执行
         if workflow.is_manual == 1:
-            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+            result = self.execute_native(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
         # inception执行
         elif not SysConfig().get('inception'):
             inception_engine = GoInceptionEngine()
-            return inception_engine.execute(workflow)
+            result = inception_engine.execute(workflow)
         else:
             inception_engine = InceptionEngine()
-            return inception_engine.execute(workflow)
+            result = inception_engine.execute(workflow)
+        for row in result.rows:
+            # 没有找出DDL语句的才继续执行此判断
+            if row.errlevel < 2:
+                if get_syntax_type(row.sql, parser=False, db_type='mysql') == 'DDL':
+                    # 从information_schema查询影响行数语句
+                    s_map = change_ddl_to_query_count(db_name=workflow.db_name, sql=row.sql, s_map={}, key=row.id)
+                    if len(s_map) > 0:
+                        sql = s_map[row.id]
+                        row_affect = self.query(sql=sql)
+                        r_list = row_affect.rows
+                        row.affected_rows = r_list[0]
+        return result
 
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""
@@ -296,6 +346,60 @@ class MysqlEngine(EngineBase):
         if close_conn:
             self.close()
         return result
+
+    def execute_native(self, db_name=None, sql='', close_conn=True):
+        """原生执行上线单，返回Review set"""
+        execute_result = ReviewSet(full_sql=sql)
+        conn = self.get_connection(db_name=db_name)
+        line = 1
+        _sql = None
+        try:
+            cursor = conn.cursor()
+            split_sql = sqlparse.split(sql)
+            for _sql in split_sql:
+                with FuncTimer() as t:
+                    res = cursor.execute(_sql)
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Execute Successfully',
+                    errormessage='None',
+                    sql=_sql,
+                    affected_rows=res,
+                    execute_time=t.cost,
+                ))
+                line += 1
+            conn.commit()
+            cursor.close()
+        except Exception as e:
+            logger.warning(f"MySQL语句执行报错，语句：{_sql}， 错误信息：{traceback.format_exc()}")
+            # 追加当前报错语句信息到执行结果中
+            execute_result.error = str(e)
+            execute_result.rows.append(ReviewResult(
+                id=line,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=_sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+            line += 1
+            # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
+            for statement in split_sql[line - 1:]:
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Audit completed',
+                    errormessage=f'前序语句失败, 未执行',
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                ))
+                line += 1
+        if close_conn:
+            self.close()
+        return execute_result
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
