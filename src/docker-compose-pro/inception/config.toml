@@ -1,0 +1,182 @@
+# TiDB Configuration.
+
+# TiDB server host.
+host = "0.0.0.0"
+
+# tidb server advertise IP.
+advertise_address = ""
+
+# TiDB server port.
+port = 4000
+
+# path = ""
+
+[inc]
+#当建表时自增列的类型不为int或者bigint时报错
+check_autoincrement_datatype            =true
+#当建表时自增列的值指定的不为1，则报错
+check_autoincrement_init_value          =true
+#建表时，如果指定的自增列的名字不为ID，则报错，说明是有意义的，给提示（考虑到我们很多字段为TID，不报错）》
+check_autoincrement_name                =false
+#建表时，列没有注释时报错
+check_column_comment                    =true
+#检查在建表、修改列、新增列时，新的列属性是不是要有默认值
+check_column_default_value              =true
+#检查列位置/顺序变更
+check_column_position_change            =true
+# 	true,false	检查字段类型变更
+check_column_type_change                =true
+#在DML语句中使用了LIMIT时，不报错
+check_dml_limit                         =false
+#在DML语句中使用了Order By时，不报错
+check_dml_orderby                       =false
+#在DML语句中没有WHERE条件时，报错
+check_dml_where                         =true
+#打开与关闭Inception对SQL语句中各种名字的检查，如果设置为ON，则如果发现名字中存在除数字、字母、下划线之外的字符时，会报Identifier "invalidname" is invalid, valid options: [a-z,A-Z,0-9,_].
+check_identifier                        =true
+#是不是要检查索引名字前缀为"idx_"，检查唯一索引前缀是不是"uniq_"
+check_index_prefix                      =true
+#是不是要检查插入语句中的列链表的存在性
+check_insert_field                      =true
+#建表时，如果没有主键，则报错
+check_primary_key                       =true
+#建表时，表没有注释时报错
+check_table_comment                     =true
+#建表时，如果没有为timestamp类型指定默认值，则报错(关）
+check_timestamp_default                 =true
+#	true,false	配置是否检查current_timestamp数量
+check_timestamp_count                   =false
+#自增列是不是要为无符号型
+enable_autoincrement_unsigned           =true
+#检查是不是支持BLOB字段，包括建表、修改列、新增列操作 默认开启
+enable_blob_type                        =true
+#允许列自己设置字符集
+enable_column_charset                   =true
+#	true,false	是否允许删除数据库
+enable_drop_database                    =false
+#	true,false	是否允许删除表
+enable_drop_table                       =false
+#是不是支持enum,set,bit数据类型
+enable_enum_set_bit                     =true
+#	true,false	sql指纹功能。dml语句相似时，可以根据相同的指纹ID复用explain结果，以减少远端数据库explain操作，并提高审核速度
+enable_fingerprint                      =true
+#是不是支持外键
+enable_foreign_key                      =true
+#	true,false	设置是否允许json类型字段，包括建表、修改列、新增列操作
+enable_json_type                        =true
+#检查在SQL语句中，是不是有标识符被写成MySQL的关键字，默认值为报警。
+enable_identifer_keyword                =true
+#建表指定的存储引擎不为Innodb，是不是不报错
+enable_not_innodb                       =false
+#创建或者新增列时如果列为NULL，不报错
+enable_nullable                         =false
+#true,false	创建索引时是否允许空索引名
+enable_null_index_name                  =false
+#order by rand时是不是报错（随机）
+enable_orderby_rand                     =true
+#是不是支持分区表
+enable_partition_table                  =true
+# true,false	是否强制主键列必须是int
+enable_pk_columns_only_int              =true
+#Select*时是不是要报错
+enable_select_star                      =false
+# true,false	是否允许指定表和数据库的字符集
+enable_set_charset                      =true
+#	true,false	是否允许指定表和数据库的排序规则
+enable_set_collation                    =true
+# true,false	是否允许指定存储引擎,默认为true
+enable_set_engine                       =true
+#当char类型的长度大于这个值时，就提示将其转换为VARCHAR
+max_char_length                         =20
+#	设置insert values允许的最大行数.0为不限制
+max_insert_rows                         =0
+#一个表中，最大的索引数目，超过这个数则报错
+max_keys                                =10
+#一个索引中，列的最大个数，超过这个数目则报错
+max_key_parts                           =5
+#在一个修改语句中，预计影响的最大行数，超过这个数就报错
+max_update_rows                         =1000000
+	#	主键最多可指定的列数
+max_primary_key_parts                   =1
+	#    允许的最大数据包大小.默认为 4194304,单位字节,即4MB
+max_allowed_packet                      =33554432
+#在多个改同一个表的语句出现是，报错，提示合成一个
+merge_alter_table                       =true
+	#  	true,false	开启时,当使用 float/double 类型时提示转成 decimal 类型
+check_float_double                      =true
+#表示在建表或者建库时支持的字符集，如果需要多个，则用逗号分隔，影响的范围是建表、设置会话字符集、修改表字符集属性等
+support_charset                         ="utf8,utf8mb4"
+#	支持的排序规则,多个时以逗号分隔
+support_collation                       ="utf8_general_ci,utf8mb4_general_ci"
+
+# mysql sql审核执行备份数据库
+backup_host = "172.16.5.9"
+backup_port = 3319
+backup_user = "sql_audit"
+backup_password = "QSl_a4px89"
+
+
+# 安全更新是否开启.
+# -1 表示不做操作,基于远端数据库 [默认值]
+# 0  表示关闭安全更新
+# 1  表示开启安全更新
+sql_safe_updates = 0
+
+# lang = "en-US"
+lang = "zh-CN"
+
+# 是否记录全量日志
+general_log = false
+
+# 开启统计功能
+#设置是不是支持统计Inception执行过的语句中，各种语句分别占多大比例，如果打开这个参数，则每次执行的情况都会在备份数据库实例中的inception库的statistic表中以一条记录存储这次操作的统计情况，每次操作对应一条记录，这条记录中含有的信息是各种类型的语句执行次数情况。
+enable_sql_statistic = true
+
+# 设置报错等级
+#2 为错误，即强限制，无法执行
+#1 为警告，即弱限制，可通过忽略警告参数ignore_warnings跳过
+#0 为正常，即不做限制
+[inc_level]
+er_cant_set_engine = 2
+er_cant_set_collation = 2
+er_table_must_have_comment = 2
+er_column_have_no_comment = 2
+er_table_must_have_pk = 2
+er_index_name_idx_prefix = 1
+er_index_name_uniq_prefix =  1
+er_autoinc_unsigned = 2
+er_alter_table_once = 2
+er_pk_too_many_parts = 2
+er_not_allowed_nullable = 2
+er_with_default_add_column = 2
+er_inc_init_err = 2
+er_cant_change_column_position = 2
+
+
+[osc]
+osc_on = false
+osc_min_table_size = 16
+osc_print_none = false
+osc_bin_dir = "/usr/local/bin"
+
+[ghost]
+
+ghost_on = false
+ghost_allow_on_master = true
+ghost_assume_rbr = true
+ghost_chunk_size = 1000
+ghost_concurrent_rowcount = true
+ghost_cut_over = "atomic"
+ghost_cut_over_lock_timeout_seconds = 3
+ghost_default_retries = 60
+ghost_heartbeat_interval_millis = 500
+ghost_max_lag_millis = 1500
+ghost_approve_renamed_columns = true
+ghost_exponential_backoff_max_interval = 64
+ghost_dml_batch_size = 10
+
+[log]
+# Log level: debug, info, warn, error, fatal.
+level = "error"
+# Log format, one of json, text, console.
+format = "console"

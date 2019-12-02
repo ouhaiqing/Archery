@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:5
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass 123456
+    expose:
+      - "6379"
+
+  inception:
+    image: hhyo/inception
+    container_name: inception
+    restart: always
+    expose:
+      - "6669"
+    volumes:
+      - "./inception/inc.cnf:/etc/inc.cnf"
+
+  goinception:
+    image: hanchuanchuan/goinception
+    container_name: goinception
+    restart: always
+    expose:
+      - "4000"
+    volumes:
+      - "./inception/config.toml:/etc/config.toml"
+
+  archery:
+    image: archery:1.0.0
+    container_name: archery
+    restart: always
+    ports:
+      - "9123:9123"
+    volumes:
+      - "./archery/settings.py:/opt/archery/archery/settings.py"
+      - "./archery/soar.yaml:/etc/soar.yaml"
+      - "./archery/docs.md:/opt/archery/docs/docs.md"
+      - "./archery/downloads:/opt/archery/downloads"
+    entrypoint: "dockerize -wait tcp://172.16.5.9:3319 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
+    environment:
+      NGINX_PORT: 9123
