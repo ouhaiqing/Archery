@@ -11,7 +11,7 @@ from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
-from .models import Instance, ParamTemplate, ParamHistory
+from .models import Instance, ParamTemplate, ParamHistory, DatabaseGroup
 from django.db.models import Q
 
 
@@ -306,6 +306,71 @@ def instance_resource(request):
             result['data'] = resource.rows
     return HttpResponse(json.dumps(result), content_type='application/json')
 
+
+def instance_resource_warehouse(request):
+    """
+    获取实例内的资源信息，database、schema、table、column
+    :param request:
+    :return:
+    """
+    instance_id = request.POST.get('instance_id')
+    instance_name = request.POST.get('instance_name')
+    db_name = request.POST.get('db_name')
+    schema_name = request.POST.get('schema_name')
+    tb_name = request.POST.get('tb_name')
+
+    resource_type = request.POST.get('resource_type')
+    if instance_id:
+        instance = Instance.objects.get(id=instance_id)
+    else:
+        try:
+            instance = Instance.objects.get(instance_name=instance_name)
+        except Instance.DoesNotExist:
+            result = {'status': 1, 'msg': '实例不存在', 'data': []}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    try:
+        query_engine = get_engine(instance=instance)
+        if resource_type == 'database':
+            resource = query_engine.get_all_databases()
+            dbgs = DatabaseGroup.objects.filter(instance_name=instance.instance_name)
+            warehouses = []
+            for dbg in dbgs:
+                warehouses.append({"name":dbg.name,"databases":dbg.database_list});
+        elif resource_type == 'schema' and db_name:
+            resource = query_engine.get_all_schemas(db_name=db_name)
+        elif resource_type == 'table' and db_name:
+            if schema_name:
+                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+            else:
+                resource = query_engine.get_all_tables(db_name=db_name)
+        elif resource_type == 'column' and db_name and tb_name:
+            if schema_name:
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+            else:
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
+        else:
+            raise TypeError('不支持的资源类型或者参数不完整！')
+    except Exception as msg:
+        result['status'] = 1
+        result['msg'] = str(msg)
+    else:
+        if resource.error:
+            result['status'] = 1
+            result['msg'] = resource.error
+        else:
+            result['data'] = resource.rows
+            result['warehouses'] = warehouses
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+def databaseGroup2dict(std):
+    return {
+        'name':std.name,
+        'age':std.age,
+        'score':std.score
+    }
 
 def describe(request):
     """获取表结构"""

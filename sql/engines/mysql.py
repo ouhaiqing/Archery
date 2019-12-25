@@ -326,8 +326,9 @@ class MysqlEngine(EngineBase):
                     if len(s_map) > 0:
                         sql = s_map[row.id]
                         row_affect = self.query(sql=sql)
-                        r_list = row_affect.rows
-                        row.affected_rows = r_list[0]
+                        if len(row_affect.rows) > 0 and len(row_affect.rows[0]) > 0:
+                            r_list = row_affect.rows
+                            row.affected_rows = r_list[0][0]
         return result
 
     def execute(self, db_name=None, sql='', close_conn=True):

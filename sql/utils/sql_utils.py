@@ -54,11 +54,11 @@ def get_syntax_type(sql, parser=True, db_type='mysql'):
 def change_ddl_to_query_count(db_name, sql, s_map, key):
     schema_sql = 'select TABLE_ROWS from information_schema.`TABLES` where TABLE_SCHEMA = \'' + db_name + '\' and TABLE_NAME = \'TB_NAME\';'
     s_t_name = ''
-    sql_list = sql.split(' ')
+    sql_list = re.split(" |\n|\r", sql)
     e_list = []
     for e in sql_list:
         if e != '':
-            e_list.append(e)
+            e_list.append(e.replace('`',''))
 
     if (e_list[0].lower() == 'alter'
         or e_list[0].lower() == 'rename'

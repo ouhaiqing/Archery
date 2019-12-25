@@ -1,0 +1,11 @@
+ul.ztree {border: 1px solid #ccc;background: white;width:400px;height:222px;overflow-y:scroll;overflow-x:auto;}
+
+.ztree li span.button.pIcon00_ico_open{margin-right:2px; background: url(zTreeStyle/img/diy/1_open.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon00_ico_close{margin-right:2px; background: url(zTreeStyle/img/diy/1_close.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon01_ico_open{margin-right:2px; background: url(zTreeStyle/img/diy/group_open.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon01_ico_close{margin-right:2px; background: url(zTreeStyle/img/diy/group_close.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon02_ico_open{margin-right:2px; background: url(zTreeStyle/img/diy/connect_open.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon02_ico_close{margin-right:2px; background: url(zTreeStyle/img/diy/connect_close.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon03_ico_open{margin-right:2px; background: url(zTreeStyle/img/diy/warehouse_open.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.pIcon03_ico_close{margin-right:2px; background: url(zTreeStyle/img/diy/warehouse_close.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+.ztree li span.button.icon01_ico_docu{margin-right:2px; background: url(zTreeStyle/img/diy/database.png) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}

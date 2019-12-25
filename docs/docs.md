@@ -17,6 +17,17 @@
 1.<font color=#0099ff>**mongodb支持审核上线**</font>  
 2.<font color=#0099ff>**mongodb支持count查询**</font>  
 3.<font color=#0099ff>**mongodb支持aggregate管道查询**</font>  
-4.<font color=#0099ff>**mysql支持视图创建，修改， 删除(如果有视图删除操作， 请务必把删除语句放到末尾)**</font>  
+4.<font color=#0099ff>**mysql支持视图创建，修改， 删除(如果有视图删除操作，
+请务必把删除语句放到末尾)**</font>  
 5.<font color=#0099ff>**查询界面添加mongodb和mysql的操作说明**</font>  
 6.<font color=#0099ff>**支持实例可以用host(ip)字段查询**</font>  
+<font color=red size=3>**注:mongdb目前暂不支持函数式变量，
+比如ISOData()**</font>
+
+
+### v1.2.0
+
+1.<font
+color=#0099ff>**支持sql提交可以多选多个数据库保存生成多个工单**</font>  
+2.<font color=#0099ff>**支持数据库分组管理功能**</font>  
+3.<font color=#0099ff>**支持按钮权限**</font>

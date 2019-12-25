@@ -65,6 +65,7 @@ def sqlworkflow(request):
     # 其他人只能查看自己提交的工单
     else:
         filter_dict['engineer'] = user.username
+    sql_batch_submit_enabled = user.has_perm('sql.sql_batch_submit')
     instance_id = SqlWorkflow.objects.filter(**filter_dict).values('instance_id').distinct()
     instance = Instance.objects.filter(pk__in=instance_id)
     resource_group_id = SqlWorkflow.objects.filter(**filter_dict).values('group_id').distinct()
@@ -72,7 +73,8 @@ def sqlworkflow(request):
 
     return render(request, 'sqlworkflow.html',
                   {'status_list': SQL_WORKFLOW_CHOICES,
-                   'instance': instance, 'resource_group': resource_group})
+                   'instance': instance, 'resource_group': resource_group,
+                   'sql_batch_submit_enabled': sql_batch_submit_enabled})
 
 
 @permission_required('sql.sql_submit', raise_exception=True)
@@ -94,6 +96,27 @@ def submit_sql(request):
     context = {'active_user': active_user, 'group_list': group_list,
                'enable_backup_switch': archer_config.get('enable_backup_switch')}
     return render(request, 'sqlsubmit.html', context)
+
+
+@permission_required('sql.sql_batch_submit', raise_exception=True)
+def submit_sql_batch(request):
+    """提交SQL的页面"""
+    user = request.user
+    # 获取组信息
+    group_list = user_groups(user)
+
+    # 获取所有有效用户，通知对象
+    active_user = Users.objects.filter(is_active=1)
+
+    # 获取系统配置
+    archer_config = SysConfig()
+
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True})
+
+    context = {'active_user': active_user, 'group_list': group_list,
+               'enable_backup_switch': archer_config.get('enable_backup_switch')}
+    return render(request, 'sqlsubmit_batch.html', context)
 
 
 def detail(request, workflow_id):
@@ -182,6 +205,96 @@ def detail(request, workflow_id):
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
     return render(request, 'detail.html', context)
+
+# def batch_detail(request):
+#     """展示SQL工单详细页面"""
+#     workfolw_ids = request.POST['workfolw_ids']
+#     workfolw_list = workfolw_ids.split(",")
+#     workflow_id = workfolw_list[0]
+#     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+#     if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
+#         rows = workflow_detail.sqlworkflowcontent.execute_result
+#     else:
+#         rows = workflow_detail.sqlworkflowcontent.review_content
+#     # 自动审批不通过的不需要获取下列信息
+#     if workflow_detail.status != 'workflow_autoreviewwrong':
+#         # 获取当前审批和审批流程
+#         audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, 2)
+#
+#         # 是否可审核
+#         is_can_review = Audit.can_review(request.user, workflow_id, 2)
+#         # 是否可执行
+#         is_can_execute = can_execute(request.user, workflow_id)
+#         # 是否可定时执行
+#         is_can_timingtask = can_timingtask(request.user, workflow_id)
+#         # 是否可取消
+#         is_can_cancel = can_cancel(request.user, workflow_id)
+#
+#         # 获取审核日志
+#         try:
+#             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+#                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+#             last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+#         except Exception as e:
+#             logger.debug(f'无审核日志记录，错误信息{e}')
+#             last_operation_info = ''
+#     else:
+#         audit_auth_group = '系统自动驳回'
+#         current_audit_auth_group = '系统自动驳回'
+#         is_can_review = False
+#         is_can_execute = False
+#         is_can_timingtask = False
+#         is_can_cancel = False
+#         last_operation_info = None
+#
+#     # 获取定时执行任务信息
+#     if workflow_detail.status == 'workflow_timingtask':
+#         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
+#         job = task_info(job_id)
+#         if job:
+#             run_date = job.next_run
+#         else:
+#             run_date = ''
+#     else:
+#         run_date = ''
+#
+#     # 获取是否开启手工执行确认
+#     manual = SysConfig().get('manual')
+#     review_result = ReviewSet()
+#     if rows:
+#         try:
+#             # 检验rows能不能正常解析
+#             loaded_rows = json.loads(rows)
+#             #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+#             if isinstance(loaded_rows[-1], list):
+#                 for r in loaded_rows:
+#                     review_result.rows += [ReviewResult(inception_result=r)]
+#                 rows = review_result.json()
+#         except IndexError:
+#             review_result.rows += [ReviewResult(
+#                 id=1,
+#                 sql=workflow_detail.sqlworkflowcontent.sql_content,
+#                 errormessage="Json decode failed."
+#                              "执行结果Json解析失败, 请联系管理员"
+#             )]
+#             rows = review_result.json()
+#         except json.decoder.JSONDecodeError:
+#             review_result.rows += [ReviewResult(
+#                 id=1,
+#                 sql=workflow_detail.sqlworkflowcontent.sql_content,
+#                 # 迫于无法单元测试这里加上英文报错信息
+#                 errormessage="Json decode failed."
+#                              "执行结果Json解析失败, 请联系管理员"
+#             )]
+#             rows = review_result.json()
+#     else:
+#         rows = workflow_detail.sqlworkflowcontent.review_content
+#
+#     context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
+#                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
+#                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
+#                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
+#     return render(request, 'batch_detail.html', context)
 
 
 def rollback(request):

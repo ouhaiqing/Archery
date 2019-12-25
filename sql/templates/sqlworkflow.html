@@ -41,6 +41,16 @@
                 提交SQL
             </button>
         </div>
+
+        {% if sql_batch_submit_enabled %}
+        <div class="form-group ">
+            <button type="button" class="btn btn-danger"
+                    onclick="window.location.href='/submitsql_batch/'">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                批量提交SQL
+            </button>
+        {% endif %}
+        </div>
     </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">

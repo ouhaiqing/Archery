@@ -150,7 +150,6 @@
     $(document).ready(function () {
         $(document).keydown(function (event) {
             //keycode==13为回车键
-            console.log($("#sign-up").css("display"))
             if (event.keyCode === 13 && $("#sign-up").css("display") === 'none') {
                 $('#btnLogin').addClass('disabled');
                 $('#btnLogin').prop('disabled', true);

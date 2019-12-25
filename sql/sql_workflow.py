@@ -203,6 +203,7 @@ def submit(request):
                 run_date_start=run_date_start or None,
                 run_date_end=run_date_end or None
             )
+            check_result.rows[0].sql = 'use `'+db_name+'`;'
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
                                               review_content=check_result.json(),
@@ -226,6 +227,115 @@ def submit(request):
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
+
+
+@permission_required('sql.sql_batch_submit', raise_exception=True)
+def submit_batch(request):
+    """正式提交SQL, 此处生成工单"""
+    sql_content = request.POST.get('sql_content').strip()
+    workflow_title = request.POST.get('workflow_name')
+    # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
+    group_name = request.POST.get('group_name')
+    group_id = ResourceGroup.objects.get(group_name=group_name).group_id
+
+    instance_db_list = request.POST.get('instance_db_list')
+    instance_db_jsons = json.loads(instance_db_list)
+    instance_name = instance_db_jsons[0].get('instance_name')
+    instance = Instance.objects.get(instance_name=instance_name)
+    db_name = instance_db_jsons[0].get('db_name')
+
+    is_backup = True if request.POST.get('is_backup') == 'True' else False
+    notify_users = request.POST.getlist('notify_users')
+    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    run_date_start = request.POST.get('run_date_start')
+    run_date_end = request.POST.get('run_date_end')
+
+    is_manual = request.POST.get('is_manual')
+
+    # 服务器端参数验证
+    if None in [sql_content, db_name, instance_name, instance_db_list, is_backup]:
+        context = {'errMsg': '页面提交参数可能为空'}
+        return render(request, 'error.html', context)
+
+    # 验证组权限（用户是否在该组、该组是否有指定实例）
+    try:
+        user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
+    except instance.DoesNotExist:
+        context = {'errMsg': '你所在组未关联该实例！'}
+        return render(request, 'error.html', context)
+
+    # 再次交给engine进行检测，防止绕过
+    try:
+        check_engine = get_engine(instance=instance)
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
+    except Exception as e:
+        context = {'errMsg': str(e)}
+        return render(request, 'error.html', context)
+
+    # 未开启备份选项，并且engine支持备份，强制设置备份
+    sys_config = SysConfig()
+    if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
+        is_backup = True
+
+    # 按照系统配置确定是自动驳回还是放行
+    auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+    workflow_status = 'workflow_manreviewing'
+    if check_result.warning_count > 0 and auto_review_wrong == '1':
+        workflow_status = 'workflow_autoreviewwrong'
+    elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
+        workflow_status = 'workflow_autoreviewwrong'
+
+    # 调用工作流生成工单
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 存进数据库里
+            for instance_db_json in instance_db_jsons:
+                d_name = instance_db_json.get('db_name')
+                instance_name = instance_db_json.get('instance_name')
+                instance = Instance.objects.get(instance_name=instance_name)
+
+                sql_workflow = SqlWorkflow.objects.create(
+                    workflow_name=workflow_title,
+                    group_id=group_id,
+                    group_name=group_name,
+                    engineer=request.user.username,
+                    engineer_display=request.user.display,
+                    audit_auth_groups=Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview']),
+                    status=workflow_status,
+                    is_backup=is_backup,
+                    instance=instance,
+                    db_name=d_name,
+                    is_manual=is_manual,
+                    syntax_type=check_result.syntax_type,
+                    create_time=timezone.now(),
+                    run_date_start=run_date_start or None,
+                    run_date_end=run_date_end or None
+                )
+                check_result.rows[0].sql = 'use `' + d_name + '`;'
+                SqlWorkflowContent.objects.create(workflow=sql_workflow,
+                                                  sql_content=sql_content,
+                                                  review_content=check_result.json(),
+                                                  execute_result=''
+                                                  )
+                workflow_id = sql_workflow.id
+                # 自动审核通过了，才调用工作流
+                if workflow_status == 'workflow_manreviewing':
+                    # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+                    Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
+    except Exception as msg:
+        logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+    else:
+        # 自动审核通过才进行消息通知
+        if workflow_status == 'workflow_manreviewing':
+            # 获取审核信息
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
+
+    return HttpResponseRedirect('/sqlworkflow/')
 
 
 @permission_required('sql.sql_review', raise_exception=True)

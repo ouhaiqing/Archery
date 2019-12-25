@@ -144,6 +144,28 @@ class ResourceGroup2Instance(models.Model):
         verbose_name_plural = u'资源组关联实例'
 
 
+class DatabaseGroup(models.Model):
+    """
+    资源组
+    """
+    id = models.AutoField('ID', primary_key=True)
+    name = models.CharField('名称', max_length=100, unique=True)
+    instance_name = models.CharField('实例名称', max_length=255)
+    database_list = models.CharField('数据库列表', max_length=512)
+    creator = models.CharField('创建人', max_length=255)
+    modifier = models.CharField('修改人', max_length=255)
+    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        managed = True
+        db_table = 'database_group'
+
+
 class InstanceTag(models.Model):
     """实例标签配置"""
     tag_code = models.CharField('标签代码', max_length=20, unique=True)

@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="form-inline">
+        <div class="form-group ">
+            <button id="btn_add" type="button" class="btn btn-default"
+                    data-toggle="modal" data-target="#myModal">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                添加组
+            </button>
+        </div>
+    </div>
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="group-list" data-toggle="table" class="table table-striped table-hover"
+               style="word-break:break-all; word-wrap:break-word;">
+        </table>
+    </div>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="padding: 5px;background-color: #f5f5f5;border-radius: 3px">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">数据库分组</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel-body">
+                        <div class="col-md-12 column">
+                            <div class="form-group">
+                                <input id="dg_id" type="hidden" />
+                                <input id="dg_instance_name" type="hidden" />
+                                <input id="dg_database_list" type="hidden" value="[]"/>
+                                <input id="dg_name" type="text" name="dg_name"
+                                       class="form-control"
+                                       data-name="分组名称" data-placeholder="请输入分组名称"
+                                       placeholder="请输入分组名称">
+                            </div>
+
+                            <div class="form-group">
+                                <select id="instance_name" name="instance_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-live-search="true"
+                                        title="请选择实例:"
+                                        data-placeholder="请选择实例:" required>
+                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
+                                    <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <ul id="treeDemo" class="ztree" style="width:510px"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer" style="background-color: #f5f5f5;border-radius: 3px">
+                    <button type="button" id="clo_bt" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-success" onclick = "save()">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        //获取列表
+        function grouplist() {
+            //采取异步请求
+            //初始化table
+            $('#group-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/databasegroup/list/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    fileName: 'group'  //文件名称设置
+                },
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search
+                        }
+                    },
+                columns: [{
+                    title: 'ID',
+                    field: 'id',
+                    width: '3%'
+                }, {
+                    title: '组名称',
+                    field: 'name',
+                    width: '12%'
+                }, {
+                    title: '实例名称',
+                    field: 'instance_name',
+                    width: '10%'
+                }, {
+                    title: '数据库组',
+                    field: 'database_list',
+                    width: '62%'
+                }, {
+                    title: '操作管理',
+                    field: '',
+                    width: '10%',
+                    formatter: function (value, row, index) {
+                        var row_info= JSON.stringify(row);
+                        var html = "<button type='button' id='edit_bt' class='btn btn-success btn-xs' onclick='update_info("+row_info+")' data-toggle='modal' data-target='#myModal'>修改</button>&nbsp;";
+                        html += "<button type='button' class='btn btn-danger btn-xs' onclick='del_info("+row.id+")'>删除</button>";
+                        return html;
+                    }
+                }],
+                onLoadSuccess: function () {
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                }
+            });
+
+        }
+
+        //初始化数据
+        $(document).ready(function () {
+            grouplist();
+            initZTree();
+        });
+        $('#myModal').on('show.bs.modal', function () {
+            // alert("触发show事件");
+            getInstances();
+        })
+
+        $('#myModal').on('shown.bs.modal', function () {
+            //alert("触发shown事件");
+
+        })
+        $('#myModal').on('hide.bs.modal', function () {
+            // alert("触发hide事件");
+            //更新
+            initZTree();
+            $("#dg_instance_name").val("");
+            $("#dg_database_list").val("[]");
+            $("#dg_name").val("");
+            $("#dg_id").val("");
+            $("#optgroup-mysql").empty();
+            $("#optgroup-mssql").empty();
+            $("#optgroup-redis").empty();
+            $("#optgroup-pgsql").empty();
+            $("#optgroup-mongo").empty();
+            $("#optgroup-phoenix").empty();
+            $('#instance_name').selectpicker('render');
+            $('#instance_name').selectpicker('refresh');
+
+        })
+        $('#myModal').on('hidden.bs.modal', function () {
+            // alert("触发hidden事件");
+        })
+
+        //获取用户实例列表
+        function getInstances() {
+            $.ajax({
+                type: "get",
+                url: "/group/user_all_instances/",
+                dataType: "json",
+                data: {
+                    tag_codes: ['can_write']
+                },
+                complete: function () {
+                    //填充实例名
+                    if ($("#instance_name").val()) {
+                        $("#instance_name").selectpicker().trigger("change");
+                    }
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data['data'];
+                        $("#optgroup-mysql").empty();
+                        $("#optgroup-mssql").empty();
+                        $("#optgroup-redis").empty();
+                        $("#optgroup-pgsql").empty();
+                        $("#optgroup-mongo").empty();
+                        $("#optgroup-phoenix").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var instance="";
+                            if($("#dg_instance_name").val() == result[i]['instance_name']){
+                                instance = "<option selected value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            } else{
+                                instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            }
+                            if (result[i]['db_type'] === 'mysql') {
+                                $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mssql') {
+                                $("#optgroup-mssql").append(instance);
+                            } else if (result[i]['db_type'] === 'redis') {
+                                $("#optgroup-redis").append(instance);
+                            } else if (result[i]['db_type'] === 'pgsql') {
+                                $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
+                            } else if (result[i]['db_type'] === 'mongo') {
+                                $("#optgroup-mongo").append(instance);
+                            } else if (result[i]['db_type'] === 'phoenix') {
+                                $("#optgroup-phoenix").append(instance);
+                            }
+                        }
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        };
+
+        $("#instance_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        var ztree_node = [{ id:0, name:$("#instance_name").val(), open:true, iconSkin:"pIcon02", isParent:true, type:"instance"}];
+                        var database_list = JSON.parse($("#dg_database_list").val());
+                        for (var i = 0; i < result.length; i++) {
+                            var iconNode = { id:0+"_"+i, pId:0, name:result[i], iconSkin:"icon01", type:"database", instance_name:$("#instance_name").val()};
+                            if(database_list.length>0){
+                                for(var j = 0; j < database_list.length; j++){
+                                    if(database_list[j].name === result[i]){
+                                        iconNode = { id:0+"_"+i, pId:0, name:result[i], iconSkin:"icon01", type:"database", checked:true, instance_name:$("#instance_name").val()};
+                                        break;
+                                    }
+                                }
+                            }
+                            ztree_node.push(iconNode);
+                        }
+                        $.fn.zTree.init($("#treeDemo"), setting, ztree_node);
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+
+        function update_info(row_info){
+            $("#dg_instance_name").val(row_info.instance_name);
+            $("#dg_database_list").val(row_info.database_list);
+            $("#dg_name").val(row_info.name);
+            $("#dg_id").val(row_info.id);
+
+            // $.ajax({
+            //     type: "post",
+            //     url: "/databasegroup/edit/",
+            //     dataType: "json",
+            //     async: false,
+            //     data: {
+            //         id: id
+            //     },
+            //     complete: function () {
+            //     },
+            //     success: function (data) {
+            //         if (data.status === 0) {
+            //             console.log(data);
+            //             $("#dg_instance_name").val(data.data.instance_name);
+            //             $("#dg_database_list").val(data.data.database_list);
+            //             $("#dg_name").val(data.data.name);
+            //             $("#dg_id").val(data.data.id);
+            //         } else {
+            //             alert(data.msg);
+            //         }
+            //     },
+            //     error: function (XMLHttpRequest, textStatus, errorThrown) {
+            //         alert(errorThrown);
+            //     }
+            // });
+
+        }
+
+        function del_info(id){
+            if(confirm("是否确认删除该数据？")){
+                $.ajax({
+                    type: "post",
+                    url: "/databasegroup/delete/",
+                    dataType: "json",
+                    data: {
+                        id: id
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            alert("操作成功！");
+                            grouplist();
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+        }
+
+        function save(){
+            var dg_name = $("#dg_name").val();
+            if(dg_name.trim() == ""){
+                alert("分组名称不能为空！");
+                return;
+            }
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+            var nodes = zTree.getCheckedNodes(true);
+            if(nodes.length > 0) {
+                var database_list = [];
+                var instance_name = "";
+                for(var i=0;i<nodes.length;i++){
+                    if(nodes[i].type == "database"){
+                        nodeFlag = true;
+                        instance_name =  nodes[i].instance_name;
+                        database_list.push({name:nodes[i].name});
+
+                    }
+                }
+                var database_list_json = JSON.stringify(database_list);
+
+                $.ajax({
+                    type: "post",
+                    url: "/databasegroup/save/",
+                    dataType: "json",
+                    data: {
+                        id: $("#dg_id").val(),
+                        name: dg_name,
+                        instance_name: instance_name,
+                        database_list: database_list_json,
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            alert("操作成功！");
+                            $("#clo_bt").click();
+                            grouplist();
+
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+
+
+            } else {
+                alert("请至少选择一个数据库！");
+                return;
+            }
+        }
+    </script>
+
+        <link rel="stylesheet" href="{% static 'ztree/css/metroStyle/metroStyle.css' %}" type="text/css">
+        <link rel="stylesheet" href="{% static 'ztree/css/demo.css' %}" type="text/css">
+        <script type="text/javascript" src="{% static 'ztree/js/jquery.ztree.core.js' %}"></script>
+        <script type="text/javascript" src="{% static 'ztree/js/jquery.ztree.excheck.js' %}"></script>
+        <script type="text/javascript" src="{% static 'ztree/js/jquery.ztree.exedit.js' %}"></script>
+        <SCRIPT type="text/javascript">
+
+        var setting = {
+            view: {
+                selectedMulti: false,
+                expandSpeed: ""
+            },
+            check: {
+                enable: true
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: false
+            },
+            callback: {
+                beforeExpand: beforeExpand,
+                onClick: zTreeOnClick
+            }
+        };
+
+        function zTreeOnClick(event, treeId, treeNode, clickFlag) {
+            if(treeNode.type == "database"){
+                var zTree = $.fn.zTree.getZTreeObj(treeId);
+                if(treeNode.checked){
+                    treeNode.checked= false;
+                } else{
+                    treeNode.checked= true;
+                }
+                zTree.updateNode(treeNode);
+            }
+
+        };
+
+        function beforeExpand(treeId, treeNode) {
+            var curCount = (treeNode.children) ? treeNode.children.length : 0;
+            if(curCount==0){
+                if(treeNode.id==0){
+                    alert("请先选择实例");
+                }
+            }else{
+                var zTree = $.fn.zTree.getZTreeObj(treeId);
+                //展开当前选择的第一个节点（第三个参数sonSign：true或false 表示是否同时展开子孙的所有节点）
+                zTree.expandNode(treeNode, true, false , true);
+            }
+            return false;
+        }
+
+        function validCheckedDatabaseNode(isSubmit){
+            //将数据通过ajax提交给后端进行检查
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+            var nodes = zTree.getCheckedNodes(true);
+            var nodeFlag = false;
+            for(var i=0;i<nodes.length;i++){
+                if(nodes[i].type=="database"){
+                    nodeFlag = true;
+                    break;
+                }
+            }
+            if(nodeFlag && isSubmit){
+                var instance_db_list = [];
+                for(var i=0;i<nodes.length;i++){
+                    if(nodes[i].type=="database"){
+                        nodeFlag = true;
+                        var ele = {instance_name:nodes[i].instance_name, db_name:nodes[i].name};
+                        if(instance_db_list.indexOf(ele) == -1){
+                            instance_db_list.push(ele);
+                        }
+
+                    }
+                }
+                var json = JSON.stringify(instance_db_list);
+                $("#instance_db_list").val(json);
+            }else if(!nodeFlag && isSubmit){
+                $("#btn-format").removeClass('disabled');
+                $("#btn-format").prop('disabled', false);
+                $("#btn-autoreview").removeClass('disabled');
+                $("#btn-autoreview").prop('disabled', false);
+                alert("请至少选择一个数据库!");
+            }
+            return nodeFlag;
+        }
+
+        var zNodes_init =[
+            { id:0, name:"请选择实例", isParent:true, chkDisabled:true, iconSkin:"pIcon02"}
+        ];
+
+        function  initZTree() {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes_init);
+        }
+    </SCRIPT>
+{% endblock %}

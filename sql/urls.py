@@ -8,7 +8,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
-    resource_group, binlog, data_dictionary
+    resource_group, binlog, data_dictionary, database_group
 from sql.utils import tasks, ding_api
 
 urlpatterns = [
@@ -20,10 +20,13 @@ urlpatterns = [
     path('signup/', auth.sign_up),
     path('sqlworkflow/', views.sqlworkflow),
     path('submitsql/', views.submit_sql),
+    path('submitsql_batch/', views.submit_sql_batch),
     path('editsql/', views.submit_sql),
     path('submitotherinstance/', views.submit_sql),
     path('detail/<int:workflow_id>/', views.detail, name='detail'),
+    # path('batchdetail/', views.batch_detail),
     path('autoreview/', sql_workflow.submit),
+    path('autoreview_batch/', sql_workflow.submit_batch),
     path('passed/', sql_workflow.passed),
     path('execute/', sql_workflow.execute),
     path('timingtask/', sql_workflow.timing_task),
@@ -96,6 +99,7 @@ urlpatterns = [
 
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
+    path('instance/instance_resource_warehouse/', instance.instance_resource_warehouse),
     path('instance/describetable/', instance.describe),
 
     path('data_dictionary/', views.data_dictionary),
@@ -133,5 +137,12 @@ urlpatterns = [
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
 
-    path('4admin/sync_ding_user/', ding_api.sync_ding_user)
+    path('4admin/sync_ding_user/', ding_api.sync_ding_user),
+
+    path('databasegroup/', database_group.group),
+    path('databasegroup/list/', database_group.list),
+    path('databasegroup/create/', database_group.create),
+    path('databasegroup/edit/', database_group.edit),
+    path('databasegroup/save/', database_group.save),
+    path('databasegroup/delete/', database_group.delete)
 ]
