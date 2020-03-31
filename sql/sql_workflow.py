@@ -287,12 +287,19 @@ def submit_batch(request):
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
+    # 去重复数据
+    tem_map = {}
     try:
         with transaction.atomic():
             # 存进数据库里
             for instance_db_json in instance_db_jsons:
                 d_name = instance_db_json.get('db_name')
                 instance_name = instance_db_json.get('instance_name')
+                key = d_name+instance_name;
+                if key not in tem_map.keys():
+                    tem_map[key] = instance_name
+                else:
+                    break
                 instance = Instance.objects.get(instance_name=instance_name)
 
                 sql_workflow = SqlWorkflow.objects.create(
@@ -430,9 +437,9 @@ def execute(request):
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
 
-    if Audit.check_is_self(request.user, workflow_id) is True:
-        context = {'errMsg': '你无权操作自己提交的工单！'}
-        return render(request, 'error.html', context)
+    # if Audit.check_is_self(request.user, workflow_id) is True:
+    #     context = {'errMsg': '你无权操作自己提交的工单！'}
+    #     return render(request, 'error.html', context)
 
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}

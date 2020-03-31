@@ -110,10 +110,10 @@ support_charset                         ="utf8,utf8mb4"
 support_collation                       ="utf8_general_ci,utf8mb4_general_ci"
 
 # mysql sql审核执行备份数据库
-backup_host = "172.16.5.9"
-backup_port = 3319
-backup_user = "sql_audit"
-backup_password = "QSl_a4px89"
+backup_host = "127.0.0.1"
+backup_port = 3306
+backup_user = "root"
+backup_password = "ouhaiqing419"
 
 
 # 安全更新是否开启.

@@ -327,6 +327,12 @@ def sqlanalyze(request):
     return render(request, 'sqlanalyze.html')
 
 
+@permission_required('sql.menu_dataimport', raise_exception=True)
+def dataimport(request):
+    """数据导入页面"""
+    return render(request, 'dataimport.html')
+
+
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     """SQL在线查询页面"""
@@ -494,7 +500,7 @@ def workflowsdetail(request, audit_id):
         return HttpResponseRedirect(reverse('sql:detail', args=(audit_detail.workflow_id,)))
 
 
-@permission_required('sql.menu_document', raise_exception=True)
+#@permission_required('sql.menu_document', raise_exception=True)
 def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件

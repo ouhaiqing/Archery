@@ -8,7 +8,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
-    resource_group, binlog, data_dictionary, database_group
+    resource_group, binlog, data_dictionary, database_group, data_import
 from sql.utils import tasks, ding_api
 
 urlpatterns = [
@@ -34,6 +34,7 @@ urlpatterns = [
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),
     path('sqlanalyze/', views.sqlanalyze),
+    path('dataimport/', views.dataimport),
     path('sqlquery/', views.sqlquery),
     path('slowquery/', views.slowquery),
     path('sqladvisor/', views.sqladvisor),
@@ -65,6 +66,9 @@ urlpatterns = [
 
     path('sql_analyze/generate/', sql_analyze.generate),
     path('sql_analyze/analyze/', sql_analyze.analyze),
+
+    path('data_import/list/', data_import.list),
+    path('data_import/load/', data_import.load),
 
     path('workflow/list/', workflow.lists),
     path('workflow/log/', workflow.log),

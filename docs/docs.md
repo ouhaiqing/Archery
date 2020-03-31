@@ -20,9 +20,9 @@
 4.<font color=#0099ff>**mysql支持视图创建，修改， 删除(如果有视图删除操作，
 请务必把删除语句放到末尾)**</font>  
 5.<font color=#0099ff>**查询界面添加mongodb和mysql的操作说明**</font>  
-6.<font color=#0099ff>**支持实例可以用host(ip)字段查询**</font>  
-<font color=red size=3>**注:mongdb目前暂不支持函数式变量，
-比如ISOData()**</font>
+6.<font color=#0099ff>**支持实例可以用host(ip)字段查询**</font>      
+<font color=red size=1>**注:mongdb目前暂不支持函数式变量， 比如
+ISOData()**</font>
 
 
 ### v1.2.0
@@ -30,4 +30,19 @@
 1.<font
 color=#0099ff>**支持sql提交可以多选多个数据库保存生成多个工单**</font>  
 2.<font color=#0099ff>**支持数据库分组管理功能**</font>  
-3.<font color=#0099ff>**支持按钮权限**</font>
+3.<font color=#0099ff>**支持按钮权限**</font>  
+4.<font color=#0099ff>**支持redis查询命令scan返回结果分行显示**</font>  
+5.<font color=#0099ff>**调整sql审核申请人拥有sql执行权限**</font>  
+6.<font
+color=#0099ff>**mongodb支持对_id(须配套ObjectId函数)的操作**</font>  
+7.<font color=#0099ff>**mongdb帮助文档更新说明(<font color=red
+size=1>**注:mongodb操作请务必参考 sql查询功能下的帮助文档**</font>)**</font>
+
+8.<font color=#0099ff>**数据库分组管理表格显示问题修复**</font>  
+9.<font color=#0099ff>**DDL语句解析报错bug修复**</font>
+
+
+### v1.3.0
+
+1.<font color=#0099ff>**支持单号导入功能**</font>  
+2.<font color=#0099ff>**支持数据导入功能**</font>

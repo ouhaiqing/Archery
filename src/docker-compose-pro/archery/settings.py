@@ -18,7 +18,7 @@ ALLOWED_HOSTS = ['*']
 USE_X_FORWARDED_HOST = True
 
 # 请求限制
-DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024*1024*50
 
 # Application definition
 INSTALLED_APPS = (
@@ -121,8 +121,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'archery',
         'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': 'mysql',
+        'PASSWORD': 'ouhaiqing419',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -240,4 +240,21 @@ LOGGING = {
             'propagate': False
         },
     }
+}
+
+
+#自定义参数
+CONFIG_PARAMS = {
+    'redis':{
+        'safe_inception_cmd':["del", "dump", "move", "rename", "renamenx", "restore",
+                    "append", "getset","setex", "set", "setex", "setnx",
+                    "hdel", "hmset","hset", "hsetnx",
+                    "blpop", "brpop", "brpoplpush", "lpop", "lpush", "lpushx","lset","rpush"
+                    "sadd", "scard", "smove", "spop",
+                    "zadd", "zcard","sadd", "scard", "smove", "spop"]
+    },
+    'mysql':{
+        'affected_rows_max_size': 2000*1000
+    }
+
 }

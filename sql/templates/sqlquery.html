@@ -257,9 +257,11 @@
                                     <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
                                     <i> 1、查询操作目前只支持find, count, aggregate方法：db.collection.find[count]({expression}) 与 db.collection.aggregate(<font color='red'>[</font>expression<font color='red'>]</font>)</i></br>
                                     <i> 2、审核操作目前只支持createCollection, createIndex, insert, insertMany, update, remove方法</i></br>
-                                    <i> 3、审核sql如有多条，请务必以分号";"分割</i></br>
-                                    <i> 4、e.g:</i></br>
+                                    <i> 3、支持对_id(必须配套ObjectId函数)操作, 仅限于等值操作</i></br>
+                                    <i> 4、审核sql如有多条，请务必以分号";"分割</i></br>
+                                    <i> 5、e.g:</i></br>
                                     <i> db.good.user.count({"age":{"$gt":21}})</i></br>
+                                    <i> db.good.user.find({_id:ObjectId("5dd73eb97f0b2837d24bb1d3")})</i></br>
                                     <i> db.product.find({"category_name": "你好>我好>他也好"})</i></br>
                                     <i> db.product.aggregate([{'$group' : {'_id' : "$category_code", 'count' : {'$sum': 1}}}])</i></br>
                                     <i> db.product.remove( {'name':'harking2'} ); db.produce.createIndex('name',1); db.createCollection("test_create_collection1")</i></br></br>
@@ -287,6 +289,7 @@
                                     <i> 1、修改操作相关方法：update</i></br>
                                     <i> 2、e.g:</i></br>
                                     <i>db.produce.update( {'name':'Jordan'}, {'$set':{'name':'harking'}}, {'multi':true} )</i></br>
+                                    <i>db.good.user.update({_id:ObjectId("5dd73eb97f0b2837d24bb1d3")}, {'$set':{'name':'harking'}})</i>
                                 </div>
 
                                 <div id="removeHelp" class="alert alert-info" style="display: none">
@@ -296,7 +299,8 @@
                                     <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
                                     <i> 1、删除操作务必要传入删除条件，谨慎使用，相关方法：remove</i></br>
                                     <i> 2、e.g:</i></br>
-                                    <i> db.product.remove({'name':'harking'})</i>
+                                    <i> db.product.remove({'name':'harking'})</i></i></br>
+                                    <i> db.good.user.remove({_id:ObjectId("5dd64d7a6188929e4a50ced8")})</i>
 
                                 </div>
                             </div>
@@ -842,8 +846,20 @@
                         );
                     } else {
                         //初始化查询结果
+                        var sql = result['full_sql'];
+                        var escape = true;
+                        if(sql.indexOf('scan ')==0){
+                            // redis 的scan命令会返回两部分result， 游标位和 target keys
+                            var listStr = '';
+                            for(var i=0;i<result['rows'][1][0].length;i++){
+                                listStr = listStr+result['rows'][1][0][i]+"<br/>";
+                            }
+                            result['rows'][1][0] =listStr;
+                            escape = false;
+                        }
+
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                            escape: true,
+                            escape: escape,
                             data: result['rows'],
                             columns: columns,
                             showExport: true,

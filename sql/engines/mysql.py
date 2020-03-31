@@ -67,7 +67,9 @@ class MysqlEngine(EngineBase):
         sql = "show databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
-                   if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+            #if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+            #"""放开test 库"""
+            if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'sys')]
         result.rows = db_list
         return result
 
@@ -401,6 +403,23 @@ class MysqlEngine(EngineBase):
         if close_conn:
             self.close()
         return execute_result
+
+    def execute_batch(self, db_name=None, sqlMap={}, close_conn=True):
+        """原生执行上线单，返回Review set"""
+        conn = self.get_connection(db_name=db_name)
+        _sql = None
+        try:
+            cursor = conn.cursor()
+            for _sql in sqlMap.values():
+                res = cursor.execute(_sql)
+            conn.commit()
+            cursor.close()
+        except Exception as e:
+            logger.error(f"MySQL语句执行报错，语句：{_sql}， 错误信息：{traceback.format_exc()}")
+            res = 0
+        if close_conn:
+            self.close()
+        return res
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""

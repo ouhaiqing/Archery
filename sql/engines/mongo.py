@@ -7,7 +7,7 @@ import json
 
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from bson import json_util
+from bson import json_util, ObjectId
 from common.utils.timer import FuncTimer
 from pymongo import operations
 
@@ -87,8 +87,16 @@ class MongoEngine(EngineBase):
             # 普通查询是json，一般查询是数组
             if ope == 'find':
                 if sql != '':
-                    sql = json.loads(sql)
-                    result = collect.find(sql).limit(limit_num)
+
+                    _id_pos = sql.find("_id")
+                    oid_pos = sql.find("ObjectId")
+                    condition = sql.replace("_id", "").replace("ObjectId", "").replace("\"", "").replace("\'", "") \
+                    .replace("(", "").replace(")", "").replace("{", "").replace("}", "").replace(":", "").replace(" ", "")
+                    if oid_pos > _id_pos > 0 and len(condition) == 24:
+                        result = collect.find({'_id':ObjectId(condition)})
+                    else:
+                        _sql = json.loads(sql)
+                        result = collect.find(_sql).limit(limit_num)
                 else:
                     result = collect.find({}).limit(limit_num)
             elif ope == 'count':
@@ -238,13 +246,27 @@ class MongoEngine(EngineBase):
             ids = collect.insert_many(documents=json.loads(sql))
             rows_affect = len(ids.inserted_ids)
         elif ope == 'update':
-            jsql = '[' + sql + ']'
-            parm_list = json.loads(jsql)
-            multi = False
-            if len(parm_list)>2 and parm_list[2]['multi']!=None:
-                multi = parm_list[2]['multi']
-            result = collect.update(spec=parm_list[0], document=parm_list[1], upsert=False, manipulate=False,
-                                    multi=multi, check_keys=True)
+
+            parm_list = sql.split(",")
+            _sql = parm_list[0]
+            _id_pos = _sql.find("_id")
+            oid_pos = _sql.find("ObjectId")
+            condition = _sql.replace("_id", "").replace("ObjectId", "").replace("\"", "").replace("\'", "") \
+                .replace("(", "").replace(")", "").replace("{", "").replace("}", "").replace(":", "").replace(" ", "")
+            update_value = sql[sql.find(parm_list[1]):]
+
+            update_json = json.loads(update_value)
+            if oid_pos > _id_pos > 0 and len(condition) == 24:
+                result = collect.update({'_id': ObjectId(condition)}, update_json)
+
+            else:
+                jsql = '[' + sql + ']'
+                parm_list = json.loads(jsql)
+                multi = False
+                if len(parm_list) > 2 and parm_list[2]['multi'] != None:
+                    multi = parm_list[2]['multi']
+                result = collect.update(spec=parm_list[0], document=parm_list[1], upsert=False, manipulate=False,
+                                        multi=multi, check_keys=True)
             rows_affect = result['nModified']
         elif ope == 'updateMany':
             jsql = '[' + sql + ']'
@@ -255,7 +277,15 @@ class MongoEngine(EngineBase):
             rows_affect = result.modified_count
         elif ope == 'remove':
             if sql != '' and sql != '{}':
-                result = collect.remove(spec_or_id=json.loads(sql), multi=True)
+
+                _id_pos = sql.find("_id")
+                oid_pos = sql.find("ObjectId")
+                condition = sql.replace("_id", "").replace("ObjectId", "").replace("\"", "").replace("\'", "") \
+                    .replace("(", "").replace(")", "").replace("{", "").replace("}", "").replace(":", "").replace(" ","")
+                if oid_pos > _id_pos > 0 and len(condition) == 24:
+                    result = collect.remove({'_id': ObjectId(condition)})
+                else:
+                    result = collect.remove(spec_or_id=json.loads(sql), multi=True)
                 rows_affect = result['n']
         # elif ope == 'delete':
         #     jsql = '[' + sql + ']'

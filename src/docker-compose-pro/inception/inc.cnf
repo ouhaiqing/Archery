@@ -7,10 +7,10 @@ character-set-client-handshake=0
 character-set-server=utf8mb4
 inception_language_code=zh-CN
 
-inception_remote_system_password=QSl_a4px89
-inception_remote_system_user=sql_audit
-inception_remote_backup_port=3319
-inception_remote_backup_host=172.16.5.9
+inception_remote_system_password=ouhaiqing419
+inception_remote_system_user=root
+inception_remote_backup_port=3306
+inception_remote_backup_host=127.0.0.1
 
 inception_support_charset=utf8,utf8mb4
 inception_enable_nullable=0

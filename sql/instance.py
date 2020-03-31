@@ -296,8 +296,13 @@ def instance_resource(request):
         else:
             raise TypeError('不支持的资源类型或者参数不完整！')
     except Exception as msg:
-        result['status'] = 1
-        result['msg'] = str(msg)
+        if str(msg) == "unknown command 'CONFIG'":
+            # 默认为 16 个数据库
+            db_list = [str(x) for x in range(16)]
+            result['data'] = db_list
+        else:
+            result['status'] = 1
+            result['msg'] = str(msg)
     else:
         if resource.error:
             result['status'] = 1

@@ -90,6 +90,11 @@
                                         <a href="/sqlanalyze/">SQL分析</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_dataimport %}
+                                    <li>
+                                        <a href="/dataimport/">数据导入</a>
+                                    </li>
+                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
@@ -220,11 +225,9 @@
                             <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
-                    {% if perms.sql.menu_document %}
-                        <li>
-                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
-                        </li>
-                    {% endif %}
+                    <li>
+                        <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
+                    </li>
                 </ul>
             </div>
             <!-- /.sidebar-collapse -->

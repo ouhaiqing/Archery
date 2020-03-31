@@ -833,3 +833,26 @@ class SlowQueryHistory(models.Model):
         index_together = ('hostname_max', 'ts_min')
         verbose_name = u'慢日志明细'
         verbose_name_plural = u'慢日志明细'
+
+
+class IdImportHistory(models.Model):
+    """
+    资源组
+    """
+    bid = models.CharField('批次ID', max_length=64,primary_key=True)
+    file_name = models.CharField('文件名称', max_length=255, unique=True)
+    instance_name = models.CharField('实例名称', max_length=255)
+    db_name = models.CharField('数据库名称', max_length=255)
+    tb_name = models.CharField('表名称', max_length=255)
+    record_count = models.IntegerField('记录数量')
+    type = models.IntegerField('导入类型')
+    is_valid = models.IntegerField('是否有效', default=2)
+    creator = models.CharField('创建人账号', max_length=255)
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.bid
+    class Meta:
+        managed = True
+        db_table = 'id_import_history'
+        ordering = ['-create_time']
