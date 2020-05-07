@@ -158,15 +158,25 @@ class MysqlEngine(EngineBase):
             # LIMIT N
             limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)
             # LIMIT N, N 或LIMIT N OFFSET N
-            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
+            limit_n_n = re.compile(r'limit([\s]*\d+[\s]*)(,)([\s]*\d+[\s]*)$', re.I)
+            # LIMIT N, N 或LIMIT N OFFSET N
+            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(offset)([\s]*\d+[\s]*)$', re.I)
             if limit_n.search(sql):
                 sql_limit = limit_n.search(sql).group(1)
                 limit_num = min(int(limit_num), int(sql_limit))
                 sql = limit_n.sub(f'limit {limit_num};', sql)
-            elif limit_offset.search(sql):
-                sql_limit = limit_offset.search(sql).group(3)
+            elif limit_n_n.search(sql):
+                sql_limit1 = limit_n_n.search(sql).group(1)
+                sql_limit2 = limit_n_n.search(sql).group(2)
+                sql_limit = limit_n_n.search(sql).group(3)
                 limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_offset.sub(f'limit {limit_num};', sql)
+                sql = limit_n_n.sub(f'limit {sql_limit1} {sql_limit2} {limit_num};', sql)
+            elif limit_offset.search(sql):
+                sql_limit1 = limit_offset.search(sql).group(1)
+                sql_limit2 = limit_offset.search(sql).group(2)
+                sql_limit = limit_offset.search(sql).group(3)
+                limit_num = min(int(limit_num), int(sql_limit1))
+                sql = limit_offset.sub(f'limit {limit_num} {sql_limit2} {sql_limit};', sql)
             else:
                 sql = f'{sql} limit {limit_num};'
         else:
